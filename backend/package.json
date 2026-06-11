@@ -11,13 +11,16 @@
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
     "bcryptjs": "^3.0.3",
-    "cors": "^2.8.5",
+    "chromadb": "^3.4.3",
+    "cors": "^2.8.6",
     "dotenv": "^16.4.5",
-    "express": "^4.19.2",
+    "express": "^4.22.2",
     "express-rate-limit": "^7.3.1",
     "helmet": "^7.1.0",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.7.0",
+    "multer": "^2.1.1",
+    "pdf-parse": "^1.1.1",
     "uuid": "^10.0.0"
   }
 }

@@ -1,0 +1,39 @@
+services:
+  chromadb:
+    image: chromadb/chroma:latest
+    ports:
+      - "8000:8000"
+    environment:
+      - IS_PERSISTENT=TRUE
+    volumes:
+      - chroma_data:/chroma/data
+
+  mongo:
+    image: mongo:6
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_DATABASE: synthetix-ai
+    volumes:
+      - mongo_data:/data/db
+
+  backend:
+    build: ./backend
+    ports:
+      - "5000:5000"
+    depends_on:
+      - chromadb
+      - mongo
+    environment:
+      CHROMA_URL: http://chromadb:8000
+      MONGODB_URI: mongodb://mongo:27017/synthetix-ai
+      NODE_ENV: development
+      PORT: 5000
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    restart: unless-stopped
+
+volumes:
+  chroma_data:
+  mongo_data:

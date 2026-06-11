@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import Sidebar from './components/Sidebar';
 import ChatArea from './components/ChatArea';
 import Auth from './components/Auth';
+import PdfExtractor from './components/PdfExtractor';
 import './App.css';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
@@ -20,6 +21,9 @@ export default function App() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [isDark, setIsDark] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
+  const [currentView, setCurrentView] = useState('chat');
+  const [pdfs, setPdfs] = useState([]);
+  const [activePdfId, setActivePdfId] = useState(null);
 
   useEffect(() => {
     const check = () => {
@@ -39,6 +43,7 @@ export default function App() {
   useEffect(() => {
     if (token) {
       fetchChats();
+      fetchPdfs();
     }
   }, [token]);
 
@@ -49,6 +54,18 @@ export default function App() {
       });
       const data = await res.json();
       if (res.ok) setChats(data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const fetchPdfs = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/api/pdfs`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (res.ok) setPdfs(data);
     } catch (err) {
       console.error(err);
     }
@@ -92,21 +109,41 @@ export default function App() {
         setChats={setChats}
         activeChatId={activeChatId}
         setActiveChatId={setActiveChatId}
+        pdfs={pdfs}
+        setPdfs={setPdfs}
+        activePdfId={activePdfId}
+        setActivePdfId={setActivePdfId}
+        currentView={currentView}
+        setCurrentView={setCurrentView}
         onLogout={handleLogout}
         username={user?.username}
       />
 
-      <ChatArea
-        isDark={isDark}
-        onToggleTheme={toggleTheme}
-        onToggleSidebar={toggleSidebar}
-        sidebarOpen={sidebarOpen}
-        token={token}
-        activeChatId={activeChatId}
-        setActiveChatId={setActiveChatId}
-        chats={chats}
-        setChats={setChats}
-      />
+      {currentView === 'chat' ? (
+        <ChatArea
+          isDark={isDark}
+          onToggleTheme={toggleTheme}
+          onToggleSidebar={toggleSidebar}
+          sidebarOpen={sidebarOpen}
+          token={token}
+          activeChatId={activeChatId}
+          setActiveChatId={setActiveChatId}
+          chats={chats}
+          setChats={setChats}
+        />
+      ) : (
+        <PdfExtractor
+          isDark={isDark}
+          onToggleTheme={toggleTheme}
+          onToggleSidebar={toggleSidebar}
+          sidebarOpen={sidebarOpen}
+          token={token}
+          activePdfId={activePdfId}
+          setActivePdfId={setActivePdfId}
+          pdfs={pdfs}
+          setPdfs={setPdfs}
+        />
+      )}
     </div>
   );
 }

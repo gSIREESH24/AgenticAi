@@ -11,11 +11,16 @@ export default function Sidebar({
   setChats,
   activeChatId,
   setActiveChatId,
+  pdfs,
+  setPdfs,
+  activePdfId,
+  setActivePdfId,
+  currentView,
+  setCurrentView,
   onLogout,
   username
 }) {
-  const handleDelete = async (e, id) => {
-    e.stopPropagation();
+  const handleDeleteChat = async (e, id) => {
     try {
       const res = await fetch(`${API_BASE}/api/chats/${id}`, {
         method: 'DELETE',
@@ -25,6 +30,23 @@ export default function Sidebar({
         setChats(prev => prev.filter(c => c._id !== id));
         if (activeChatId === id) {
           setActiveChatId(null);
+        }
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleDeletePdf = async (e, id) => {
+    try {
+      const res = await fetch(`${API_BASE}/api/pdfs/${id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        setPdfs(prev => prev.filter(p => p._id !== id));
+        if (activePdfId === id) {
+          setActivePdfId(null);
         }
       }
     } catch (err) {
@@ -98,53 +120,143 @@ export default function Sidebar({
         )}
       </div>
 
-      <button
-        type="button"
-        className="sb-new-chat"
-        id="new-chat-btn"
-        title="New conversation"
-        onClick={() => setActiveChatId(null)}
-      >
-        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" width="15" height="15">
-          <path d="M10 4v12M4 10h12" strokeLinecap="round"/>
-        </svg>
-        {open && <span>New conversation</span>}
-      </button>
+      <div className="sb-mode-toggle">
+        <button
+          type="button"
+          className={`sb-mode-btn ${currentView === 'chat' ? 'active' : ''}`}
+          onClick={() => {
+            setCurrentView('chat');
+          }}
+          title={!open ? 'AI Chatbot' : undefined}
+        >
+          💬 {open && <span>Chatbot</span>}
+        </button>
+        <button
+          type="button"
+          className={`sb-mode-btn ${currentView === 'pdf-extractor' ? 'active' : ''}`}
+          onClick={() => {
+            setCurrentView('pdf-extractor');
+          }}
+          title={!open ? 'PDF Analyzer' : undefined}
+        >
+          📄 {open && <span>PDF RAG</span>}
+        </button>
+      </div>
 
-
-      {open && chats.length > 0 && <span className="sb-section-label">Recent chats</span>}
-
-      <div className="sb-history">
-        {chats.map(chat => (
+      {currentView === 'chat' ? (
+        <>
           <button
             type="button"
-            key={chat._id}
-            className={`sb-history-item ${activeChatId === chat._id ? 'active' : ''}`}
-            onClick={() => setActiveChatId(chat._id)}
-            title={!open ? chat.title : undefined}
+            className="sb-new-chat"
+            id="new-chat-btn"
+            title="New conversation"
+            onClick={() => {
+              setActiveChatId(null);
+            }}
           >
-            <div className="sb-hist-icon">{chat.emoji || '💬'}</div>
-            {open && (
-              <div className="sb-hist-info">
-                <span className="sb-hist-title">{chat.title}</span>
-                <span className="sb-hist-time">{getFriendlyTime(chat.updatedAt)}</span>
-              </div>
-            )}
-            {open && (
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" width="15" height="15">
+              <path d="M10 4v12M4 10h12" strokeLinecap="round"/>
+            </svg>
+            {open && <span>New conversation</span>}
+          </button>
+
+          {open && chats.length > 0 && <span className="sb-section-label">Recent chats</span>}
+
+          <div className="sb-history">
+            {chats.map(chat => (
               <button
                 type="button"
-                className="sb-delete-btn"
-                onClick={(e) => handleDelete(e, chat._id)}
-                title="Delete conversation"
+                key={chat._id}
+                className={`sb-history-item ${activeChatId === chat._id ? 'active' : ''}`}
+                onClick={() => {
+                  setActiveChatId(chat._id);
+                }}
+                title={!open ? chat.title : undefined}
               >
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="13" height="13">
-                  <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
+                <div className="sb-hist-icon">{chat.emoji || '💬'}</div>
+                {open && (
+                  <div className="sb-hist-info">
+                    <span className="sb-hist-title">{chat.title}</span>
+                    <span className="sb-hist-time">{getFriendlyTime(chat.updatedAt)}</span>
+                  </div>
+                )}
+                {open && (
+                  <button
+                    type="button"
+                    className="sb-delete-btn"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteChat(e, chat._id);
+                    }}
+                    title="Delete conversation"
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="13" height="13">
+                      <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </button>
+                )}
               </button>
-            )}
+            ))}
+          </div>
+        </>
+      ) : (
+        <>
+          <button
+            type="button"
+            className="sb-new-chat"
+            title="Upload new PDF"
+            onClick={() => {
+              setActivePdfId(null);
+            }}
+          >
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" width="15" height="15">
+              <path d="M10 4v12M4 10h12" strokeLinecap="round"/>
+            </svg>
+            {open && <span>New Upload</span>}
           </button>
-        ))}
-      </div>
+
+          {open && pdfs.length > 0 && <span className="sb-section-label">Recent uploads</span>}
+
+          <div className="sb-history">
+            {pdfs.map(pdfItem => (
+              <button
+                type="button"
+                key={pdfItem._id}
+                className={`sb-history-item ${activePdfId === pdfItem._id ? 'active' : ''}`}
+                onClick={() => {
+                  setActivePdfId(pdfItem._id);
+                }}
+                title={!open ? pdfItem.fileName : undefined}
+              >
+                <div className="sb-hist-icon">📄</div>
+                {open && (
+                  <div className="sb-hist-info">
+                    <span className="sb-hist-title">{pdfItem.fileName}</span>
+                    <span className="sb-hist-time">
+                      {pdfItem.chunks ? `${pdfItem.chunks.length} chunks` : '0 chunks'}
+                    </span>
+                  </div>
+                )}
+                {open && (
+                  <button
+                    type="button"
+                    className="sb-delete-btn"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeletePdf(e, pdfItem._id);
+                    }}
+                    title="Delete PDF history"
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="13" height="13">
+                      <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </button>
+                )}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
 
       <div className="sb-bottom">
         <button
