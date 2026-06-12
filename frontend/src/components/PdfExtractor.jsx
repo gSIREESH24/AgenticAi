@@ -119,7 +119,6 @@ export default function PdfExtractor({
     try {
       const response = await axios.post(`${API_BASE}/upload`, formData, {
         headers: {
-          'Content-Type': 'multipart/form-data',
           Authorization: `Bearer ${token}`
         }
       });

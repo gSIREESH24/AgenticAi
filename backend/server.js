@@ -121,6 +121,9 @@ app.post(
   upload.single('pdf'),
   async (req, res) => {
     try {
+      if (!req.file) {
+        return res.status(400).json({ error: 'No file uploaded or invalid field name. Please upload a PDF file under the "pdf" key.' });
+      }
       const pdf = await import('pdf-parse');
       const filePath = req.file.path;
       const dataBuffer = fs.readFileSync(filePath);
@@ -250,6 +253,14 @@ app.delete(
       const pdf = await PdfSession.findOneAndDelete({ _id: req.params.id, userId: req.userId });
       if (!pdf) {
         return res.status(404).json({ error: 'Not Found', message: 'PDF history item not found' });
+      }
+      try {
+        const collection = await getCollection();
+        await collection.delete({
+          where: { source: pdf.fileName }
+        });
+      } catch (chromaErr) {
+        console.error('Failed to delete chunks from ChromaDB:', chromaErr.message);
       }
       res.json({ message: 'PDF session deleted successfully' });
     } catch (error) {
